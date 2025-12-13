@@ -39,9 +39,9 @@ def create_extractions(datasets, periods, regions, aggregations):
 
                             # point extraction does not allow for additional aggregations
                             if region.type == 'point':
-                                extractions[period.specifier][region.specifier]['values'] = (
+                                extractions[period.specifier][region.specifier]['value'] = (
                                     concat_extraction(
-                                        extractions.get(period.specifier, {}).get(region.specifier, {}).get('values'),
+                                        extractions.get(period.specifier, {}).get(region.specifier, {}).get('value'),
                                         ds_region
                                     )
                                 )

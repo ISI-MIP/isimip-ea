@@ -62,19 +62,22 @@ def init_period(specifier):
 
         return {
             'type': 'period',
+            'specifier': specifier,
             'start_time': start_time,
             'end_time': end_time
         }
     elif re.match(r'\d{4}', specifier):
         return {
             'type': 'date',
+            'specifier': specifier,
             'time': parse_date(specifier)
         }
 
     # if region could not be determined, log error and return
     logger.error(f'could not determine type for period "{specifier}"')
     return {
-        'type': 'unknown'
+        'type': 'unknown',
+        'specifier': specifier
     }
 
 
@@ -89,14 +92,8 @@ def init_region(specifier):
             else:
                 df = pd.read_csv(location)
 
-            if specifier.isdigit():
-                rows = df.loc[df.index == int(specifier)]
-            else:
-                rows = df[df["specifier"] == specifier]
-
-            if not rows.empty:
-                row = rows.iloc[0]
-
+            row = find_row(df, specifier)
+            if row:
                 if {'west', 'east', 'south', 'north'}.issubset(df.columns):
                     return {
                         'type': 'bbox',
@@ -130,15 +127,8 @@ def init_region(specifier):
         elif location.suffix == '.zip' or location.suffix == '.shp':
             import geopandas
             df = geopandas.read_file(location)
-
-            if specifier.isdigit():
-                rows = df.loc[df.index == int(specifier)]
-            else:
-                rows = df[df["specifier"] == specifier]
-
-            if not rows.empty:
-                row = rows.iloc[0]
-
+            row = find_row(df, specifier)
+            if row:
                 return {
                     'type': 'shape',
                     'specifier': f'layer-{specifier}' if specifier.isdigit() else specifier,
@@ -149,8 +139,34 @@ def init_region(specifier):
     # if region could not be determined, log error and return
     logger.error(f'could not determine type for region "{specifier}"')
     return {
-        'type': 'unknown'
+        'type': 'unknown',
+        'specifier': specifier
     }
+
+
+    rows = pd.DataFrame()  # start with empty DataFrame
+
+    if str(specifier).isdigit():
+        rows = df.loc[df.index == int(specifier)]
+    elif 'specifier' in df.columns:
+        rows = df[df['specifier'] == specifier]
+
+    if not rows.empty:
+        return rows.iloc[0].to_dict()  # convert the row to a dictionary
+    else:
+        return None
+
+
+def find_row(df, specifier):
+    if specifier.isdigit():
+        rows = df.loc[df.index == int(specifier)]
+    elif 'specifier' in df.columns:
+        rows = df[df['specifier'] == specifier]
+    else:
+        rows = pd.DataFrame()
+
+    if not rows.empty:
+        return rows.iloc[0].to_dict()
 
 
 def parse_date(string, start=True):
