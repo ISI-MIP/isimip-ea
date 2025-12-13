@@ -6,11 +6,13 @@ from isimip_utils.extractions import (
     compute_temporal_average,
     concat_extraction,
     count_values,
+    mask_bbox,
+    mask_mask,
     select_period,
     select_point,
     select_time,
 )
-from isimip_utils.xarray import get_attrs, open_dataset, set_attrs, set_fill_value_to_nan, write_dataset
+from isimip_utils.xarray import create_mask, get_attrs, open_dataset, set_attrs, set_fill_value_to_nan, write_dataset
 
 from .config import settings
 from .utils import update_file_name
@@ -94,11 +96,15 @@ def extract_region(ds, region):
     if region.type == 'global':
         return ds
 
+    elif region.type == 'bbox':
+        return mask_bbox(ds, region.west, region.east, region.south, region.north)
+
     elif region.type == 'mask':
-        pass
+        return mask_mask(ds, region.mask_ds, region.mask_var)
 
     elif region.type == 'shape':
-        pass
+        mask = create_mask(ds, region.df, region.layer)
+        return mask_mask(ds, mask)
 
     elif region.type == 'point':
         return select_point(ds, region.lat, region.lon)

@@ -31,10 +31,8 @@ class File:
 class Period:
 
     def __init__(self, specifier):
-        self.specifier = specifier
-
         if specifier == 'auto':
-            self.type = 'auto'
+            self.type = self.specifier = specifier
         else:
             self.__dict__.update(init_period(specifier))
 
@@ -45,10 +43,9 @@ class Period:
 class Region:
 
     def __init__(self, specifier):
-        self.specifier = specifier
 
         if specifier == 'global':
-            self.type = 'global'
+            self.type = self.specifier = specifier
         else:
             self.__dict__.update(init_region(specifier))
 
@@ -59,8 +56,7 @@ class Region:
 class Aggregation:
 
     def __init__(self, specifier):
-        self.specifier = specifier
-        self.type = specifier
+        self.type = self.specifier = specifier
 
     def  __repr__(self):
         return self.specifier

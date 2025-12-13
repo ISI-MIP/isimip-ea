@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from isimip_utils.utils import get_permutations, get_placeholders
+from isimip_utils.xarray import open_dataset
 
 from .config import settings
 
@@ -82,14 +83,67 @@ def init_region(specifier):
         if not location.exists():
             raise RuntimeError(f'{location} does not exist.')
 
-        if location.suffix == '.json':
-            df = pd.read_json(location)
-            row = df[df["specifier"] == specifier]
-            if not row.empty:
+        if location.suffix in ['.json', '.csv']:
+            if location.suffix == '.json':
+                df = pd.read_json(location)
+            else:
+                df = pd.read_csv(location)
+
+            if specifier.isdigit():
+                rows = df.loc[df.index == int(specifier)]
+            else:
+                rows = df[df["specifier"] == specifier]
+
+            if not rows.empty:
+                row = rows.iloc[0]
+
+                if {'west', 'east', 'south', 'north'}.issubset(df.columns):
+                    return {
+                        'type': 'bbox',
+                        'specifier': specifier,
+                        'west': float(row['west']),
+                        'east': float(row['east']),
+                        'south': float(row['south']),
+                        'north': float(row['north'])
+                    }
+
+                if {'lat', 'lon'}.issubset(df.columns):
+                    return {
+                        'type': 'point',
+                        'specifier': specifier,
+                        'lat': float(row['lat']),
+                        'lon': float(row['lon'])
+                    }
+
+        elif location.suffix == '.nc':
+            ds = open_dataset(location)
+
+            for mask_var in [specifier, f'm_{specifier}']:
+                if mask_var in ds.data_vars:
+                    return {
+                        'type': 'mask',
+                        'specifier': specifier,
+                        'mask_ds': ds,
+                        'mask_var': mask_var
+                    }
+
+        elif location.suffix == '.zip' or location.suffix == '.shp':
+            import geopandas
+            df = geopandas.read_file(location)
+
+            if specifier.isdigit():
+                rows = df.loc[df.index == int(specifier)]
+            else:
+                rows = df[df["specifier"] == specifier]
+
+            if not rows.empty:
+                row = rows.iloc[0]
+
                 return {
-                    'type': 'point',
-                    'lat': float(row['lat'].iloc[0]),
-                    'lon': float(row['lon'].iloc[0])
+                    'type': 'shape',
+                    'specifier': f'layer-{specifier}' if specifier.isdigit() else specifier,
+                    'df': df,
+                    'layer': row.name
                 }
 
     # if region could not be determined, log error and return
