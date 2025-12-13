@@ -24,13 +24,12 @@ def main():
     parser.add_argument('--plots-path', dest='plots_path', type=parse_path,
                         help='Base path for the created plots')
 
-
     parser.add_argument('-p', '--periods', dest='periods', type=parse_list, default='auto',
                         help='Extract only specific periods (comma separated, format: YYYY, YYYYMMDD, '
                              'YYYY-YYYY, YYYYMMDD-YYYYMMDD)')
     parser.add_argument('-r', '--regions', dest='regions', type=parse_list, default='global',
                         help='Extract only specific regions (comma separated)')
-    parser.add_argument('-a', '--aggregations', dest='aggregations', type=parse_list, default='value',
+    parser.add_argument('-a', '--aggregations', dest='aggregations', type=parse_list, default='mean',
                         help='Perform aggregations when extracting (comma separated)')
 
     parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
@@ -96,12 +95,12 @@ def main():
     # create list of datasets
     datasets = [Dataset(path) for path in gather_datasets()]
 
-    # create list of regions and periods
+    # create list of regions, periods, and aggregations
     regions = [Region(specifier) for specifier in settings.REGIONS]
     periods = [Period(specifier) for specifier in settings.PERIODS]
     aggregations = [Aggregation(specifier) for specifier in settings.AGGREGATIONS]
 
-    # run the extractions
+    # create the extractions
     if not settings.PLOTS_ONLY:
         create_extractions(datasets, periods, regions, aggregations)
 

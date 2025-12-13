@@ -76,6 +76,7 @@ def init_period(specifier):
         'type': 'unknown'
     }
 
+
 def init_region(specifier):
     for location in settings.REGIONS_LOCATIONS:
         if not location.exists():
@@ -97,6 +98,7 @@ def init_region(specifier):
         'type': 'unknown'
     }
 
+
 def parse_date(string, start=True):
     try:
         return datetime.strptime(string, "%Y")
@@ -109,6 +111,9 @@ def parse_date(string, start=True):
 
 def update_file_name(path, period_specifier, region_specifier, aggregation_specifier):
     stem = path.stem
+
+    if aggregation_specifier != 'value':
+        region_specifier = f'{region_specifier}-{aggregation_specifier}'
 
     if '_global_' in stem:
         stem = stem.replace('_global_', f'_{region_specifier}_')

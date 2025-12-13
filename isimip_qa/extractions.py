@@ -1,8 +1,16 @@
 import logging
 from collections import defaultdict
 
-from isimip_utils.extractions import concat_extraction, select_period, select_point, select_time
-from isimip_utils.xarray import open_dataset, write_dataset
+from isimip_utils.extractions import (
+    compute_spatial_average,
+    compute_temporal_average,
+    concat_extraction,
+    count_values,
+    select_period,
+    select_point,
+    select_time,
+)
+from isimip_utils.xarray import get_attrs, open_dataset, set_attrs, set_fill_value_to_nan, write_dataset
 
 from .config import settings
 from .utils import update_file_name
@@ -17,7 +25,6 @@ def create_extractions(datasets, periods, regions, aggregations):
 
         for file in dataset.files:
             with open_dataset(file.path, decode_cf=False, load=settings.LOAD) as ds_file:
-
                 # loop over periods
                 for period in periods:
                     ds_period = extract_period(ds_file, period)
@@ -30,9 +37,9 @@ def create_extractions(datasets, periods, regions, aggregations):
 
                             # point extraction does not allow for additional aggregations
                             if region.type == 'point':
-                                extractions[region.specifier][period.specifier]['values'] = (
+                                extractions[period.specifier][region.specifier]['values'] = (
                                     concat_extraction(
-                                        extractions.get(region.specifier, {}).get(period.specifier, {}).get('values'),
+                                        extractions.get(period.specifier, {}).get(region.specifier, {}).get('values'),
                                         ds_region
                                     )
                                 )
@@ -46,10 +53,10 @@ def create_extractions(datasets, periods, regions, aggregations):
 
                                     # concat extraction only if ds_aggregation is not empty
                                     if ds_aggregation:
-                                        extractions[region.specifier][period.specifier][aggregation.specifier] = (
+                                        extractions[period.specifier][region.specifier][aggregation.specifier] = (
                                             concat_extraction(
-                                                extractions.get(region.specifier, {})
-                                                           .get(period.specifier, {})
+                                                extractions.get(period.specifier, {})
+                                                           .get(region.specifier, {})
                                                            .get(aggregation.specifier),
                                                 ds_aggregation
                                             )
@@ -72,10 +79,13 @@ def create_extractions(datasets, periods, regions, aggregations):
 def extract_period(ds, period):
     if period.type == 'auto':
         return ds
+
     elif period.type == 'period':
         return select_period(ds, period.start_time, period.end_time)
+
     elif period.type == 'date':
         return select_time(ds, period.time)
+
     else:
         logger.error(f'unknown type "{period.type}" for period "{period.specifier}"')
 
@@ -83,12 +93,16 @@ def extract_period(ds, period):
 def extract_region(ds, region):
     if region.type == 'global':
         return ds
+
     elif region.type == 'mask':
         pass
+
     elif region.type == 'shape':
         pass
+
     elif region.type == 'point':
         return select_point(ds, region.lat, region.lon)
+
     else:
         logger.error(f'unknown type "{region.type}" for region "{region.specifier}"')
 
@@ -96,10 +110,34 @@ def extract_region(ds, region):
 def extract_aggregation(ds, aggregation):
     if aggregation.type == 'value':
         return ds
-    elif aggregation.type == 'count':
-        pass
+
     elif aggregation.type == 'mean':
-        pass
+        attrs = get_attrs(ds)
+        ds = set_fill_value_to_nan(ds)
+        ds = compute_spatial_average(ds, weights=settings.WEIGHTS)
+        ds = set_attrs(ds, attrs)
+        return ds
+
+    elif aggregation.type == 'count':
+        attrs = get_attrs(ds)
+        ds = set_fill_value_to_nan(ds)
+        ds = count_values(ds)
+        ds = set_attrs(ds, attrs)
+        return ds
+
+    elif aggregation.type == 'meanmap':
+        attrs = get_attrs(ds)
+        ds = set_fill_value_to_nan(ds)
+        ds = compute_temporal_average(ds)
+        ds = set_attrs(ds, attrs)
+        return ds
+
+    elif aggregation.type == 'countmap':
+        attrs = get_attrs(ds)
+        ds = set_fill_value_to_nan(ds)
+        ds = count_values(ds, dim=('time', ))
+        ds = set_attrs(ds, attrs)
+        return ds
+
     else:
         logger.error(f'unknown type "{aggregation.type}" for aggregation "{aggregation.specifier}"')
-        pass
