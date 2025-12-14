@@ -12,4 +12,5 @@ class Settings(BaseSettings):
             ds = ds.isel(lon=0)
             return ds.cell_area
 
+
 settings = Settings()

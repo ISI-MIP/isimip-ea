@@ -3,7 +3,7 @@ from isimip_utils.cli import ArgumentParser, parse_list, parse_locations, parse_
 from . import VERSION
 from .cli import ArgumentAction
 from .config import settings
-from .extractions import create_extractions
+from .extractions import create_extractions, fetch_extractions
 from .models import Aggregation, Dataset, Period, Region
 from .plots import create_plots
 from .utils import gather_datasets
@@ -48,7 +48,7 @@ def main():
                         help='File format for plots [default: svg].')
     parser.add_argument('--primary', dest='primary', default=None,
                         help='Treat these placeholders as primary and plot them in color [default: all]')
-    parser.add_argument('--gridarea', dest='gridarea', default=None,
+    parser.add_argument('--gridarea', dest='gridarea', type=parse_path, default=None,
                         help='Use a CDO gridarea file instead of computing the gridarea when computing means')
     parser.add_argument('--grid', type=int, dest='grid', default=0, choices=[0, 1, 2],
                         help='Number of dimensions of the plot grid [default: 0, i.e. no grid]')
@@ -102,6 +102,7 @@ def main():
 
     # create the extractions
     if not settings.PLOTS_ONLY:
+        fetch_extractions(datasets, periods, regions, aggregations)
         create_extractions(datasets, periods, regions, aggregations)
 
     # create the plots

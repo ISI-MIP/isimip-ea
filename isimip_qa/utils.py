@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from isimip_utils.fetch import fetch_file, load_file
 from isimip_utils.utils import get_permutations, get_placeholders
 from isimip_utils.xarray import open_dataset
 
@@ -53,6 +54,15 @@ def gather_files(dataset_path):
         files.append((file_path, index, first, last))
 
     return files
+
+
+def gather_extractions(dataset, periods, regions, aggregations):
+    return [
+        get_extraction_path(dataset, period, region, aggregation)
+        for period in periods
+        for region in regions
+        for aggregation in aggregations
+    ]
 
 
 def init_period(specifier):
@@ -179,18 +189,33 @@ def parse_date(string, start=True):
             raise RuntimeError(f"Unrecognized date format: {string}") from e
 
 
-def update_file_name(path, period_specifier, region_specifier, aggregation_specifier):
-    stem = path.stem
+def fetch_extraction(extraction_path):
+    extraction_abspath = settings.EXTRACTIONS_PATH / extraction_path
 
-    if aggregation_specifier != 'value':
-        region_specifier = f'{region_specifier}-{aggregation_specifier}'
+    for location in settings.EXTRACTIONS_LOCATIONS:
+        if isinstance(location, Path):
+            result = load_file(location / extraction_path, extraction_abspath)
+        else:
+            result = fetch_file(f'{location}/{extraction_path}', extraction_abspath)
+
+        if result:
+            return
+
+
+def get_extraction_path(dataset, period, region, aggregation):
+    stem = dataset.path.stem
+
+    if aggregation.specifier == 'value':
+        region_specifier = region.specifier
+    else:
+        region_specifier = f'{region.specifier}-{aggregation.specifier}'
 
     if '_global_' in stem:
         stem = stem.replace('_global_', f'_{region_specifier}_')
     else:
         stem = f'{stem}_{region_specifier}'
 
-    if period_specifier != 'auto':
-        stem = re.sub(r'(\d{4}_\d{4}|\d{4})', period_specifier, stem)
+    if period.specifier != 'auto':
+        stem = re.sub(r'(\d{4}_\d{4}|\d{4})', period.specifier, stem)
 
-    return path.with_stem(stem)
+    return dataset.path.with_stem(stem).with_suffix('.nc')
