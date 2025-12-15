@@ -112,7 +112,8 @@ def get_dataframe(ds, plot, grid_permutation):
 
 def get_chart(df, plot, grid_permutation, empty=False):
     kwargs = {
-        'empty': empty
+        'empty': empty,
+        'color_scheme': settings.COLOR_SCHEME
     }
     if settings.PRIMARY and settings.PRIMARY not in grid_permutation:
         kwargs.update(strokeWidth=1)
