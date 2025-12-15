@@ -1,68 +1,14 @@
 import logging
 import re
 from datetime import datetime
-from pathlib import Path
 
 import pandas as pd
 
-from isimip_utils.fetch import fetch_file, load_file
-from isimip_utils.utils import get_permutations, get_placeholders
 from isimip_utils.xarray import open_dataset
 
 from .config import settings
 
 logger = logging.getLogger(__name__)
-
-
-def gather_datasets():
-    if settings.PLACEHOLDERS:
-        datasets = []
-        parameters = dict(settings.PLACEHOLDERS)
-        placeholder_permutations = get_permutations(parameters)
-
-        for input_path in settings.PATHS:
-            for permutations in placeholder_permutations:
-                placeholders = get_placeholders(parameters, permutations)
-
-                try:
-                    path_str = str(input_path).format(**placeholders)
-                except KeyError as e:
-                    raise RuntimeError('Some of the placeholders are missing.') from e
-
-                path = Path(path_str)
-                path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
-                datasets.append(path)
-
-        return datasets
-    else:
-        for input_path in settings.PATHS:
-            if re.search(r'\{.*\}', str(input_path)):
-                raise RuntimeError('Some of the placeholders are missing.')
-
-        return settings.PATHS
-
-
-def gather_files(dataset_path):
-    files = []
-
-    abs_path = settings.DATASETS_PATH / dataset_path
-    glob = sorted(abs_path.parent.glob(f'{abs_path.stem}*'))
-
-    for index, file_path in enumerate(glob):
-        first = (index == 0)
-        last = (index == len(glob) - 1)
-        files.append((file_path, index, first, last))
-
-    return files
-
-
-def gather_extractions(dataset, periods, regions, aggregations):
-    return [
-        get_extraction_path(dataset, period, region, aggregation)
-        for period in periods
-        for region in regions
-        for aggregation in aggregations
-    ]
 
 
 def init_period(specifier):
@@ -187,35 +133,3 @@ def parse_date(string, start=True):
             return datetime.strptime(string, "%Y%m%d")
         except ValueError as e:
             raise RuntimeError(f"Unrecognized date format: {string}") from e
-
-
-def fetch_extraction(extraction_path):
-    extraction_abspath = settings.EXTRACTIONS_PATH / extraction_path
-
-    for location in settings.EXTRACTIONS_LOCATIONS:
-        if isinstance(location, Path):
-            result = load_file(location / extraction_path, extraction_abspath)
-        else:
-            result = fetch_file(f'{location}/{extraction_path}', extraction_abspath)
-
-        if result:
-            return
-
-
-def get_extraction_path(dataset, period, region, aggregation):
-    stem = dataset.path.stem
-
-    if aggregation.specifier == 'value':
-        region_specifier = region.specifier
-    else:
-        region_specifier = f'{region.specifier}-{aggregation.specifier}'
-
-    if '_global_' in stem:
-        stem = stem.replace('_global_', f'_{region_specifier}_')
-    else:
-        stem = f'{stem}_{region_specifier}'
-
-    if period.specifier != 'auto':
-        stem = re.sub(r'(\d{4}_\d{4}|\d{4})', period.specifier, stem)
-
-    return dataset.path.with_stem(stem).with_suffix('.nc')

@@ -14,65 +14,66 @@ from isimip_utils.extractions import (
 from isimip_utils.xarray import create_mask, get_attrs, open_dataset, set_attrs, set_fill_value_to_nan, write_dataset
 
 from .config import settings
-from .utils import fetch_extraction, gather_extractions, get_extraction_path
+from .models import Aggregation, Dataset, Extraction, Period, Region
 
 logger = logging.getLogger(__name__)
 
 
-def fetch_extractions(datasets, periods, regions, aggregations):
+def fetch_extractions():
+    logger.info('Fetching extractions')
+
     if not settings.FORCE:
-        for dataset in datasets:
-            for extraction_path in gather_extractions(dataset, periods, regions, aggregations):
-                if not (settings.EXTRACTIONS_PATH / extraction_path).exists():
-                    fetch_extraction(extraction_path)
+        for dataset in Dataset.all():
+            for extraction in Extraction.gather(dataset):
+                if not extraction.exists():
+                    extraction.fetch()
 
 
-def create_extractions(datasets, periods, regions, aggregations):
-    for dataset in datasets:
+def create_extractions():
+    logger.info('Creating extractions')
+
+    for dataset in Dataset.all():
         # init extractions dict for this dataset
         extractions = {}
 
         # continue only if extractions are missing for this dataset
-        if settings.FORCE or not all(
-            (settings.EXTRACTIONS_PATH / extraction_path).exists()
-            for extraction_path in gather_extractions(dataset, periods, regions, aggregations)
-        ):
+        if settings.FORCE or not all(extraction.exists() for extraction in Extraction.gather(dataset)):
             for file in dataset.files:
                 with open_dataset(file.path, decode_cf=False, load=settings.LOAD) as ds_file:
                     # loop over periods
-                    for period in periods:
+                    for period in Period.all():
                         ds_period = extract_period(ds_file, period)
 
                         # continue only if at least one time step is selected (ds_period is not empty)
                         if ds_period:
                             # loop over regions
-                            for region in regions:
+                            for region in Region.all():
                                 ds_region = extract_region(ds_period, region)
 
                                 # point extraction does not allow for additional aggregations
                                 if region.type == 'point':
-                                    extraction_path = get_extraction_path(dataset, period, region, 'value')
-                                    extractions[extraction_path] = concat_extraction(
-                                        extractions.get(extraction_path), ds_region
+                                    extraction = Extraction(dataset, period, region, 'value')
+                                    extractions[extraction] = concat_extraction(
+                                        extractions.get(extraction), ds_region
                                     )
                                     continue
 
                                 # continue only if ds_region is not empty
                                 if ds_region:
                                     # loop over aggregations
-                                    for aggregation in aggregations:
+                                    for aggregation in Aggregation.all():
                                         ds_aggregation = extract_aggregation(ds_region, aggregation)
 
                                         # concat extraction only if ds_aggregation is not empty
                                         if ds_aggregation:
-                                            extraction_path = get_extraction_path(dataset, period, region, aggregation)
-                                            extractions[extraction_path] = concat_extraction(
-                                                extractions.get(extraction_path), ds_aggregation
+                                            extraction = Extraction(dataset, period, region, aggregation)
+                                            extractions[extraction] = concat_extraction(
+                                                extractions.get(extraction), ds_aggregation
                                             )
 
         # write extractions
-        for extraction_path, extraction in extractions.items():
-            write_dataset(extraction, settings.EXTRACTIONS_PATH / extraction_path)
+        for extraction, extraction_ds in extractions.items():
+            write_dataset(extraction_ds, settings.EXTRACTIONS_PATH / extraction.path)
 
 
 def extract_period(ds, period):

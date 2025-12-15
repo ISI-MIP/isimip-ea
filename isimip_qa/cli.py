@@ -13,9 +13,9 @@ class ArgumentAction(argparse.Action):
             match = placeholder_pattern.match(value)
             if match:
                 try:
-                    args.placeholders.update(parse_parameters(value))
+                    args.placeholders.append(parse_parameters(value))
                 except AttributeError:
-                    args.placeholders = parse_parameters(value)
+                    args.placeholders = [parse_parameters(value)]
             else:
                 try:
                     args.paths.append(parse_path(value))
