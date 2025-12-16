@@ -7,17 +7,15 @@ __pycache__/
 *.save
 .DS_Store
 
+/env
+/venv
+
 /build
 /dist
 /*.egg-info
+
 /.pytest_cache
 /.ruff_cache
+
 /.coverage*
 /htmlcov
-/env
-/.env
-*.sh
-
-testing/tmp
-
-.ipynb_checkpoints

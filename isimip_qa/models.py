@@ -12,7 +12,7 @@ from isimip_utils.utils import (
 )
 
 from .config import settings
-from .utils import init_period, init_region
+from .utils import init_period, init_region, update_path
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class Dataset:
             for path in settings.PATHS:
                 if re.search(r'\{.*\}', str(path)):
                     raise RuntimeError('Some of the placeholders are missing.')
-                datasets.append(cls(path, placeholders))
+                datasets.append(cls(path, {}))
 
         return datasets
 
@@ -111,30 +111,16 @@ class Extraction:
         self.region = region
         self.aggregation = aggregation
 
+    def  __repr__(self):
+        return str(self.path)
+
     @cached_property
     def path(self):
-        stem = self.dataset.path.stem
-
-        if self.aggregation.specifier == 'value':
-            region_specifier = self.region.specifier
-        else:
-            region_specifier = f'{self.region.specifier}-{self.aggregation.specifier}'
-
-        if '_global_' in stem:
-            stem = stem.replace('_global_', f'_{region_specifier}_')
-        else:
-            stem = f'{stem}_{region_specifier}'
-
-        if self.period.specifier != 'auto':
-            stem = re.sub(r'(\d{4}_\d{4}|\d{4})', self.period.specifier, stem)
-
-        if self.dataset.start_year:
-            stem += f'_{self.dataset.start_year}'
-
-        if self.dataset.end_year:
-            stem += f'_{self.dataset.end_year}'
-
-        return self.dataset.path.with_stem(stem).with_suffix('.nc')
+        path = update_path(
+            self.dataset.path, self.period, self.region, self.aggregation,
+            start_year=self.dataset.start_year, end_year=self.dataset.end_year
+        )
+        return path.with_suffix('.nc')
 
     @cached_property
     def abspath(self):
@@ -155,35 +141,36 @@ class Extraction:
                 return
 
     @classmethod
-    def gather(cls, dataset):
+    def gather(cls, dataset, periods, regions, aggregations):
         return [
             cls(dataset, period, region, aggregation)
-            for period in Period.all()
-            for region in Region.all()
-            for aggregation in Aggregation.all()
+            for period in periods
+            for region in regions
+            for aggregation in aggregations
         ]
 
 
 class Figure:
 
-    def __init__(self, path_template, placeholders, plot):
+    def __init__(self, path_template, placeholders, period, region, aggregation, plot):
         self.path_template = path_template
         self.placeholders = placeholders
+        self.period = period
+        self.region = region
+        self.aggregation = aggregation
         self.plot = plot
+
+    def  __repr__(self):
+        return str(self.path)
 
     @cached_property
     def path(self):
-        path = apply_placeholders(self.path_template, self.placeholders)
-        stem = path.stem
-
-        if self.start_year:
-            stem += f'_{self.start_year}'
-        if self.end_year:
-            stem += f'_{self.end_year}'
-
-        stem += f'_{self.plot}'
-
-        return path.with_stem(stem).with_suffix(f'.{settings.PLOTS_FORMAT}')
+        path = update_path(
+            apply_placeholders(self.path_template, self.placeholders),
+            self.period, self.region, self.aggregation, self.plot,
+            start_year=self.start_year, end_year=self.end_year
+        )
+        return path.with_suffix(f'.{settings.PLOTS_FORMAT}')
 
     @cached_property
     def start_year(self):
@@ -214,63 +201,46 @@ class Figure:
 
 class Period:
 
-    def __init__(self, specifier):
-        if specifier == 'auto':
-            self.type = self.specifier = specifier
+    def __init__(self, value):
+        if value == 'auto':
+            self.type = self.specifier = value
         else:
-            self.__dict__.update(init_period(specifier))
+            self.__dict__.update(init_period(value))
 
     def  __repr__(self):
         return self.specifier
-
-    @classmethod
-    def all(cls):
-        return [cls(specifier) for specifier in settings.PERIODS]
 
 
 class Region:
 
-    def __init__(self, specifier):
-
-        if specifier == 'global':
-            self.type = self.specifier = specifier
+    def __init__(self, value):
+        if value == 'global':
+            self.type = self.specifier = value
         else:
-            self.__dict__.update(init_region(specifier))
+            self.__dict__.update(init_region(value))
 
     def  __repr__(self):
         return self.specifier
-
-    @classmethod
-    def all(cls):
-        return [cls(specifier) for specifier in settings.REGIONS]
 
 
 class Aggregation:
 
-    def __init__(self, specifier):
-        self.type = self.specifier = specifier
+    def __init__(self, value):
+        self.type = self.specifier = value
 
     def  __repr__(self):
         return self.specifier
 
-    @classmethod
-    def all(cls):
-        return [cls(specifier) for specifier in settings.AGGREGATIONS]
-
 
 class Plot:
 
-    def __init__(self, specifier):
-        self.type = self.specifier = specifier
+    def __init__(self, value):
+        self.type = self.specifier = value
 
-        if specifier == 'map':
+        if value == 'map':
             self.columns = {'lat', 'lon'}
         else:
             self.columns = {'time'}
 
     def  __repr__(self):
         return self.specifier
-
-    @classmethod
-    def all(cls):
-        return [cls(specifier) for specifier in settings.PLOTS]

@@ -8,18 +8,18 @@ from isimip_utils.utils import copy_placeholders, get_placeholders, join_paramet
 from isimip_utils.xarray import open_dataset, to_dataframe
 
 from .config import settings
-from .models import Aggregation, Dataset, Extraction, Figure, Period, Plot, Region
+from .models import Dataset, Extraction, Figure
 
 logger = logging.getLogger(__name__)
 
 
-def create_plots():
+def create_plots(periods, regions, aggregations, plots):
     logger.info('Creating plots')
 
-    for period in Period.all():
-        for region in Region.all():
-            for aggregation in Aggregation.all():
-                for plot in Plot.all():
+    for period in periods:
+        for region in regions:
+            for aggregation in aggregations:
+                for plot in plots:
                     for path in settings.PATHS:
                         for figs_permutation in settings.FIGS_PERMUTATIONS:
                             figure_placeholders = copy_placeholders(
@@ -27,7 +27,7 @@ def create_plots():
                                 join_parameters(settings.GRID_PARAMETERS)
                             )
                             figure_title = get_plot_title(figs_permutation)
-                            figure = Figure(path, figure_placeholders, plot)
+                            figure = Figure(path, figure_placeholders, period, region, aggregation, plot)
 
                             if settings.FORCE or not figure.exists():
                                 charts = {}
@@ -50,17 +50,19 @@ def create_plots():
                                     empty_chart = get_chart(df, plot, grid_permutation, empty=True)
 
                                     chart = plot_grid(
-                                        settings.GRID_PARAMETERS, charts, empty_chart,
-                                        x='independent' if 'x' in settings.INDEPENDENT else 'shared',
-                                        y='independent' if 'y' in settings.INDEPENDENT else 'shared',
-                                        color='independent' # if 'color' in settings.INDEPENDENT else 'shared',
+                                        settings.GRID_PARAMETERS, charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
                                     ).properties(title=figure_title)
 
                                     save_plot(chart, figure.abspath)
 
 
 def get_dataframe(ds, plot, grid_permutation):
-    df = to_dataframe(ds)
+    try:
+        df = to_dataframe(ds)
+    except ValueError as e:
+        logger.error(f'error converting dataset: "{e}"')
+        return
+
     columns = set(df.attrs['coords'].keys())
     labels = grid_permutation[settings.GRID:]
 
@@ -110,9 +112,10 @@ def get_dataframe(ds, plot, grid_permutation):
         logger.error(f'unknown type "{plot.type}" for plot "{plot.specifier}"')
 
 
-def get_chart(df, plot, grid_permutation, empty=False):
+def get_chart(df, plot, grid_permutation, empty=False, legend=True):
     kwargs = {
         'empty': empty,
+        'legend': bool(grid_permutation),
         'color_scheme': settings.COLOR_SCHEME
     }
     if settings.PRIMARY and settings.PRIMARY not in grid_permutation:
@@ -128,7 +131,7 @@ def get_chart(df, plot, grid_permutation, empty=False):
         return plot_line(df, **kwargs)
 
     elif plot.type == 'monthofyear':
-        return plot_line(df, interpolate='step', **kwargs)
+        return plot_line(df, **kwargs)
 
     elif plot.type == 'map':
         return plot_map(df, color_format='.1e', **kwargs)
