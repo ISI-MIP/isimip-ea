@@ -13,8 +13,8 @@ def main():
 
     parser.add_argument('paths', nargs='*', action=ArgumentAction,
                         help='Paths of the datasets to process, can contain placeholders, e.g. {model}')
-    parser.add_argument('placeholders', nargs='*', action=ArgumentAction,
-                        help='Values for the placeholders in the from placeholder=value1,value2,...')
+    parser.add_argument('parameters', nargs='*', action=ArgumentAction,
+                        help='Values for the placeholders in the from key=value1,value2,...')
 
     parser.add_argument('--datasets-path', dest='datasets_path', type=parse_path,
                         help='Base path for the input datasets')
@@ -27,7 +27,8 @@ def main():
                         help='Extract only specific dates or periods (comma separated, format: YYYY, YYYYMMDD, '
                              'YYYY-YYYY, YYYYMMDD-YYYYMMDD)')
     parser.add_argument('-r', '--regions', dest='regions', type=parse_list, default='global',
-                        help='Extract only specific regions (comma separated, selected from --regions-locations)')
+                        help='Extract only specific regions (comma separated, automatically selected '
+                             'from --regions-locations)')
     parser.add_argument('-a', '--aggregations', dest='aggregations', type=parse_list, default='mean',
                         help='Perform aggregations when extracting (comma separated: value, mean, count, '
                              'meanmap, countmap)')
@@ -51,7 +52,7 @@ def main():
 
     parser.add_argument('--plots-format', dest='plots_format', default='svg',
                         help='File format for plots [default: svg].')
-    parser.add_argument('--primary', dest='primary', default=None,
+    parser.add_argument('--primary', dest='primary',
                         help='Treat these placeholders as primary and plot them in color [default: all]')
     parser.add_argument('--grid', type=int, dest='grid', default=2, choices=[0, 1, 2],
                         help='Number of dimensions of the plot grid [default: 2, i.e. 2 dimensions]')
@@ -76,6 +77,8 @@ def main():
                         default='https://files.isimip.org/qa/extractions/',
                         help='URL or file path to the locations of extractions to fetch')
 
+    parser.add_argument('-c', '--config', dest='config', type=parse_path,
+                        help='Path to an additional config file, updating default and CLI arguments and options.')
     parser.add_argument('--log-level', dest='log_level', default='WARN',
                         help='Log level (ERROR, WARN, INFO, or DEBUG)')
     parser.add_argument('--log-file', dest='log_file',
@@ -87,6 +90,7 @@ def main():
     setup_logs(log_level=args.log_level, log_file=args.log_file)
 
     settings.from_dict(vars(args))
+    settings.update_from_toml(args.config)
 
     if not settings.PATHS:
         parser.error('You need to provide at least one path.')

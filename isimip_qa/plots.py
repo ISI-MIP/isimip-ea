@@ -3,8 +3,8 @@ import logging
 import numpy as np
 
 from isimip_utils.pandas import compute_average, create_label, group_by_day, group_by_month, normalize
+from isimip_utils.parameters import copy_placeholders, get_placeholders, join_parameters
 from isimip_utils.plot import get_plot_title, plot_grid, plot_line, plot_map, save_plot
-from isimip_utils.utils import copy_placeholders, get_placeholders, join_parameters
 from isimip_utils.xarray import open_dataset, to_dataframe
 
 from .config import settings
@@ -50,7 +50,7 @@ def create_plots(periods, regions, aggregations, plots):
                                     empty_chart = get_chart(df, plot, grid_permutation, empty=True)
 
                                     chart = plot_grid(
-                                        settings.GRID_PARAMETERS, charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
+                                        settings.GRID_PERMUTATIONS, charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
                                     ).properties(title=figure_title)
 
                                     save_plot(chart, figure.abspath)

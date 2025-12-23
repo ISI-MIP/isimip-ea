@@ -3,13 +3,13 @@ import re
 from pathlib import Path
 
 from isimip_utils.fetch import fetch_file, load_file
-from isimip_utils.utils import (
+from isimip_utils.parameters import (
     apply_placeholders,
-    cached_property,
     copy_placeholders,
     get_permutations,
     get_placeholders,
 )
+from isimip_utils.utils import cached_property
 
 from .config import settings
 from .utils import init_period, init_region, update_path

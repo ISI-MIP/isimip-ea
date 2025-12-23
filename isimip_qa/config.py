@@ -1,5 +1,6 @@
 from isimip_utils.config import Settings as BaseSettings
-from isimip_utils.utils import cached_property, get_permutations
+from isimip_utils.parameters import get_permutations
+from isimip_utils.utils import cached_property
 from isimip_utils.xarray import open_dataset
 
 
@@ -13,24 +14,20 @@ class Settings(BaseSettings):
             return ds.cell_area
 
     @cached_property
-    def PARAMETERS(self):
-        return dict(self.PLACEHOLDERS) if self.PLACEHOLDERS else {}
-
-    @cached_property
     def FIGS_PARAMETERS(self):
-        return dict(self.PLACEHOLDERS[:settings.FIGS]) if self.PLACEHOLDERS else {}
+        return dict(list(self.PARAMETERS.items())[:settings.FIGS]) if self.PARAMETERS else {}
 
     @cached_property
     def GRID_PARAMETERS(self):
-        return dict(self.PLACEHOLDERS[settings.FIGS:]) if self.PLACEHOLDERS else {}
+        return dict(list(self.PARAMETERS.items())[settings.FIGS:]) if self.PARAMETERS else {}
 
     @cached_property
     def FIGS_PERMUTATIONS(self):
-        return get_permutations(settings.FIGS_PARAMETERS) if self.PLACEHOLDERS else [()]
+        return get_permutations(settings.FIGS_PARAMETERS) if self.PARAMETERS else [()]
 
     @cached_property
     def GRID_PERMUTATIONS(self):
-        return get_permutations(settings.GRID_PARAMETERS) if self.PLACEHOLDERS else [()]
+        return get_permutations(settings.GRID_PARAMETERS) if self.PARAMETERS else [()]
 
     @cached_property
     def PLOT_RESOLVE_SCALE(self):
