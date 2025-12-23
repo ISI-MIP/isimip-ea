@@ -3,13 +3,14 @@ import re
 from pathlib import Path
 
 from isimip_utils.fetch import fetch_file, load_file
+from isimip_utils.files import find_files
 from isimip_utils.parameters import (
     apply_placeholders,
     copy_placeholders,
     get_permutations,
     get_placeholders,
 )
-from isimip_utils.utils import cached_property
+from isimip_utils.utils import cached_property, get_max_value, get_min_value
 
 from .config import settings
 from .utils import init_period, init_region, update_path
@@ -28,41 +29,25 @@ class Dataset:
         return str(self.path)
 
     @cached_property
+    def abspath(self):
+        return settings.DATASETS_PATH / self.path
+
+    @cached_property
     def files(self):
-        files = []
+        glob = sorted(self.abspath.parent.glob(f'{self.abspath.stem}*'))
 
-        abs_path = settings.DATASETS_PATH / self.path
-        glob = sorted(abs_path.parent.glob(f'{abs_path.stem}*'))
-
-        for index, file_path in enumerate(glob):
-            first = (index == 0)
-            last = (index == len(glob) - 1)
-
-            m = re.search(r'_(\d{4})_*(\d{4})?$', file_path.stem)
-            if m:
-                try:
-                    start_year = int(m.group(1))
-                except TypeError:
-                    start_year = None
-
-                try:
-                    end_year = int(m.group(2))
-                except TypeError:
-                    end_year = None
-            else:
-                start_year = end_year = None
-
-            files.append(File(file_path, index, first, last, start_year, end_year))
-
-        return files
+        return [
+            File(file_path, start_year, end_year)
+            for file_path, start_year, end_year in find_files(self.path, glob)
+        ]
 
     @cached_property
     def start_year(self):
-        return min([file.start_year for file in self.files if file.start_year], default=None)
+        return get_min_value([file.start_year for file in self.files])
 
     @cached_property
     def end_year(self):
-        return max([file.end_year for file in self.files if file.end_year], default=None)
+        return get_max_value([file.end_year for file in self.files])
 
     def exists(self):
         return bool(self.files)
@@ -91,11 +76,8 @@ class Dataset:
 
 class File:
 
-    def __init__(self, path, index, first, last, start_year, end_year):
+    def __init__(self, path, start_year, end_year):
         self.path = path
-        self.index = index
-        self.first = first
-        self.last = last
         self.start_year = start_year
         self.end_year = end_year
 
@@ -173,12 +155,8 @@ class Figure:
         return path.with_suffix(f'.{settings.PLOTS_FORMAT}')
 
     @cached_property
-    def start_year(self):
-        return min([dataset.start_year for dataset in self.datasets if dataset.start_year], default=None)
-
-    @cached_property
-    def end_year(self):
-        return max([dataset.end_year for dataset in self.datasets if dataset.end_year], default=None)
+    def abspath(self):
+        return settings.PLOTS_PATH / self.path
 
     @cached_property
     def datasets(self):
@@ -192,8 +170,12 @@ class Figure:
         return datasets
 
     @cached_property
-    def abspath(self):
-        return settings.PLOTS_PATH / self.path
+    def start_year(self):
+        return get_min_value([dataset.start_year for dataset in self.datasets])
+
+    @cached_property
+    def end_year(self):
+        return get_max_value([dataset.end_year for dataset in self.datasets], default=None)
 
     def exists(self):
         return self.abspath.exists()
