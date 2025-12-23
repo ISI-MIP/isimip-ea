@@ -4,7 +4,7 @@ import numpy as np
 
 from isimip_utils.pandas import compute_average, create_label, group_by_day, group_by_month, normalize
 from isimip_utils.parameters import copy_placeholders, get_placeholders, join_parameters
-from isimip_utils.plot import get_plot_title, plot_grid, plot_line, plot_map, save_plot
+from isimip_utils.plot import format_title, plot_grid, plot_line, plot_map, save_plot
 from isimip_utils.xarray import open_dataset, to_dataframe
 
 from .config import settings
@@ -26,7 +26,7 @@ def create_plots(periods, regions, aggregations, plots):
                                 get_placeholders(settings.FIGS_PARAMETERS, figs_permutation),
                                 join_parameters(settings.GRID_PARAMETERS)
                             )
-                            figure_title = get_plot_title(figs_permutation)
+                            figure_title = format_title(figs_permutation)
                             figure = Figure(path, figure_placeholders, period, region, aggregation, plot)
 
                             if settings.FORCE or not figure.exists():
