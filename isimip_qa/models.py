@@ -175,7 +175,7 @@ class Figure:
 
     @cached_property
     def end_year(self):
-        return get_max_value([dataset.end_year for dataset in self.datasets], default=None)
+        return get_max_value([dataset.end_year for dataset in self.datasets])
 
     def exists(self):
         return self.abspath.exists()
