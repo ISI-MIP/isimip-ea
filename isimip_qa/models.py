@@ -112,15 +112,16 @@ class Extraction:
         return self.abspath.exists()
 
     def fetch(self):
-        for location in settings.EXTRACTIONS_LOCATIONS:
-            if isinstance(location, Path):
-                result = load_file(location / self.path, self.abspath)
-            else:
-                result = fetch_file(f'{location}/{self.path}', self.abspath)
+        if settings.EXTRACTIONS_LOCATIONS:
+            for location in settings.EXTRACTIONS_LOCATIONS:
+                if isinstance(location, Path):
+                    result = load_file(location / self.path, self.abspath)
+                else:
+                    result = fetch_file(f'{location}/{self.path}', self.abspath)
 
-            if result:
-                logger.info(f'Extraction "{self.path}" downloaded')
-                return
+                if result:
+                    logger.info(f'Extraction "{self.path}" downloaded')
+                    return
 
     @classmethod
     def gather(cls, dataset, periods, regions, aggregations):
