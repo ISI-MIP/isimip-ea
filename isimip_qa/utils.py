@@ -38,62 +38,63 @@ def init_period(option):
 
 
 def init_region(value):
-    for location in settings.REGIONS_LOCATIONS:
-        if not location.exists():
-            raise RuntimeError(f'{location} does not exist.')
+    if settings.REGIONS_LOCATIONS:
+        for location in settings.REGIONS_LOCATIONS:
+            if not location.exists():
+                raise RuntimeError(f'{location} does not exist.')
 
-        if location.suffix in ['.json', '.csv']:
-            if location.suffix == '.json':
-                df = pd.read_json(location)
-            else:
-                df = pd.read_csv(location)
+            if location.suffix in ['.json', '.csv']:
+                if location.suffix == '.json':
+                    df = pd.read_json(location)
+                else:
+                    df = pd.read_csv(location)
 
-            row = find_row(df, value)
-            if row:
-                if {'west', 'east', 'south', 'north'}.issubset(df.columns):
+                row = find_row(df, value)
+                if row:
+                    if {'west', 'east', 'south', 'north'}.issubset(df.columns):
+                        return {
+                            'type': 'bbox',
+                            'specifier': value,
+                            'west': float(row['west']),
+                            'east': float(row['east']),
+                            'south': float(row['south']),
+                            'north': float(row['north'])
+                        }
+
+                    if {'lat', 'lon'}.issubset(df.columns):
+                        return {
+                            'type': 'point',
+                            'specifier': value,
+                            'lat': float(row['lat']),
+                            'lon': float(row['lon'])
+                        }
+
+            elif location.suffix == '.nc':
+                ds = open_dataset(location, load=settings.LOAD)
+
+                for mask_var in [value, f'm_{value}']:
+                    if mask_var in ds.data_vars:
+                        return {
+                            'type': 'mask',
+                            'specifier': value,
+                            'mask_ds': ds,
+                            'mask_var': mask_var
+                        }
+
+            elif location.suffix == '.zip' or location.suffix == '.shp':
+                import geopandas
+                df = geopandas.read_file(location)
+                row = find_row(df, value)
+                if row:
                     return {
-                        'type': 'bbox',
-                        'specifier': value,
-                        'west': float(row['west']),
-                        'east': float(row['east']),
-                        'south': float(row['south']),
-                        'north': float(row['north'])
+                        'type': 'shape',
+                        'specifier': f'layer-{value}' if value.isdigit() else value,
+                        'df': df,
+                        'layer': row.name
                     }
-
-                if {'lat', 'lon'}.issubset(df.columns):
-                    return {
-                        'type': 'point',
-                        'specifier': value,
-                        'lat': float(row['lat']),
-                        'lon': float(row['lon'])
-                    }
-
-        elif location.suffix == '.nc':
-            ds = open_dataset(location, load=settings.LOAD)
-
-            for mask_var in [value, f'm_{value}']:
-                if mask_var in ds.data_vars:
-                    return {
-                        'type': 'mask',
-                        'specifier': value,
-                        'mask_ds': ds,
-                        'mask_var': mask_var
-                    }
-
-        elif location.suffix == '.zip' or location.suffix == '.shp':
-            import geopandas
-            df = geopandas.read_file(location)
-            row = find_row(df, value)
-            if row:
-                return {
-                    'type': 'shape',
-                    'specifier': f'layer-{value}' if value.isdigit() else value,
-                    'df': df,
-                    'layer': row.name
-                }
 
     # if region could not be determined, log error and return
-    logger.error(f'could not determine type for region "{value}"')
+    logger.warning(f'could not determine type for region "{value}"')
     return {
         'type': 'unknown',
         'specifier': value

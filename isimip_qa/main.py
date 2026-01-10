@@ -50,14 +50,16 @@ def main():
     parser.add_argument('--gridarea', dest='gridarea', type=parse_path,
                         help='Use a CDO gridarea file instead of computing the gridarea when computing means')
 
-    parser.add_argument('--plots-format', dest='plots_format', default='svg',
+    parser.add_argument('--plot-format', dest='plot_format', default='svg',
                         help='File format for plots [default: svg].')
+    parser.add_argument('--plot-index', dest='plot_index', default=True,
+                        help='Create an index.html file when creating plots.')
     parser.add_argument('--primary', dest='primary',
                         help='Treat these placeholders as primary and plot them in color [default: all]')
-    parser.add_argument('--grid', type=int, dest='grid', default=2, choices=[0, 1, 2],
-                        help='Number of dimensions of the plot grid [default: 2, i.e. 2 dimensions]')
-    parser.add_argument('--figs', type=int, dest='figs', default=0,
-                        help='Number of placeholders which generate separate figures [default: 0]')
+    parser.add_argument('--grid', dest='grid', type=parse_list, default="",
+                        help='Parameters which are used as dimensions of the plot grid.')
+    parser.add_argument('--figs', dest='figs', type=parse_list, default="",
+                        help='Parameters for which separate figures are created')
     parser.add_argument('--color-scheme', dest='color_scheme', default='category20',
                         help='Color scheme to use for plots [default: category20].')
 

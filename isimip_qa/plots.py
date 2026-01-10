@@ -4,7 +4,7 @@ import numpy as np
 
 from isimip_utils.pandas import compute_average, create_label, group_by_day, group_by_month, normalize
 from isimip_utils.parameters import copy_placeholders, get_placeholders, join_parameters
-from isimip_utils.plot import format_title, plot_grid, plot_line, plot_map, save_plot
+from isimip_utils.plot import format_title, plot_grid, plot_line, plot_map, save_index, save_plot
 from isimip_utils.xarray import open_dataset, to_dataframe
 
 from .config import settings
@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 def create_plots(periods, regions, aggregations, plots):
     logger.info('Creating plots')
 
+    index_paths = set()
+
     for period in periods:
         for region in regions:
             for aggregation in aggregations:
@@ -24,39 +26,50 @@ def create_plots(periods, regions, aggregations, plots):
                         for figs_permutation in settings.FIGS_PERMUTATIONS:
                             figure_placeholders = copy_placeholders(
                                 get_placeholders(settings.FIGS_PARAMETERS, figs_permutation),
-                                join_parameters(settings.GRID_PARAMETERS)
+                                join_parameters(settings.GRID_PARAMETERS),
+                                join_parameters(settings.PLOT_PARAMETERS)
                             )
+
                             figure_title = format_title(figs_permutation)
                             figure = Figure(path, figure_placeholders, period, region, aggregation, plot)
 
                             if settings.FORCE or not figure.exists():
                                 charts = {}
                                 for grid_permutation in settings.GRID_PERMUTATIONS:
-                                    dataset_placeholders = copy_placeholders(
-                                        get_placeholders(settings.FIGS_PARAMETERS, figs_permutation),
-                                        get_placeholders(settings.GRID_PARAMETERS, grid_permutation),
-                                    )
-                                    dataset = Dataset(path, dataset_placeholders)
+                                    for plot_permutation in settings.PLOT_PERMUTATIONS:
+                                        dataset_placeholders = copy_placeholders(
+                                            get_placeholders(settings.FIGS_PARAMETERS, figs_permutation),
+                                            get_placeholders(settings.GRID_PARAMETERS, grid_permutation),
+                                            get_placeholders(settings.PLOT_PARAMETERS, plot_permutation),
+                                        )
+                                        dataset = Dataset(path, dataset_placeholders)
 
-                                    extraction = Extraction(dataset, period, region, aggregation)
-                                    if extraction.exists():
-                                        with open_dataset(extraction.full_path) as ds:
-                                            df = get_dataframe(ds, plot, grid_permutation)
-                                            if df is not None:
-                                                chart = get_chart(df, plot, grid_permutation)
-                                                charts[grid_permutation] = chart
+                                        extraction = Extraction(dataset, period, region, aggregation)
+                                        if extraction.exists():
+                                            with open_dataset(extraction.full_path) as ds:
+                                                df = get_dataframe(ds, plot, plot_permutation)
+                                                if df is not None:
+                                                    chart = get_chart(df, plot, plot_permutation)
+                                                    charts[grid_permutation + plot_permutation] = chart
 
                                 if charts:
                                     empty_chart = get_chart(df, plot, grid_permutation, empty=True)
 
                                     chart = plot_grid(
-                                        settings.GRID_PERMUTATIONS, charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
+                                        settings.GRID_PERMUTATIONS, settings.PLOT_PERMUTATIONS,
+                                        charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
                                     ).properties(title=figure_title)
 
                                     save_plot(chart, figure.full_path)
 
+                                    index_paths.add(figure.full_path.parent)
 
-def get_dataframe(ds, plot, grid_permutation):
+    if settings.PLOT_INDEX:
+        for parent_path in index_paths:
+            save_index(parent_path / 'index.html')
+
+
+def get_dataframe(ds, plot, labels):
     try:
         df = to_dataframe(ds)
     except ValueError as e:
@@ -64,7 +77,6 @@ def get_dataframe(ds, plot, grid_permutation):
         return
 
     columns = set(df.attrs['coords'].keys())
-    labels = grid_permutation[settings.GRID:]
 
     if plot.type == 'value':
         if columns.intersection(plot.columns):
@@ -112,13 +124,13 @@ def get_dataframe(ds, plot, grid_permutation):
         logger.error(f'unknown type "{plot.type}" for plot "{plot.specifier}"')
 
 
-def get_chart(df, plot, grid_permutation, empty=False, legend=True):
+def get_chart(df, plot, labels, empty=False, legend=True):
     kwargs = {
         'empty': empty,
-        'legend': bool(grid_permutation),
+        'legend': bool(labels),
         'color_scheme': settings.COLOR_SCHEME
     }
-    if settings.PRIMARY and settings.PRIMARY not in grid_permutation:
+    if settings.PRIMARY and settings.PRIMARY not in labels:
         kwargs.update(strokeWidth=1)
 
     if plot.type == 'value':
