@@ -40,7 +40,7 @@ def create_plots(periods, regions, aggregations, plots):
 
                                     extraction = Extraction(dataset, period, region, aggregation)
                                     if extraction.exists():
-                                        with open_dataset(extraction.abspath) as ds:
+                                        with open_dataset(extraction.full_path) as ds:
                                             df = get_dataframe(ds, plot, grid_permutation)
                                             if df is not None:
                                                 chart = get_chart(df, plot, grid_permutation)
@@ -53,7 +53,7 @@ def create_plots(periods, regions, aggregations, plots):
                                         settings.GRID_PERMUTATIONS, charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
                                     ).properties(title=figure_title)
 
-                                    save_plot(chart, figure.abspath)
+                                    save_plot(chart, figure.full_path)
 
 
 def get_dataframe(ds, plot, grid_permutation):

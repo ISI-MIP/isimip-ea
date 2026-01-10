@@ -55,8 +55,8 @@ def create_extractions(periods, regions, aggregations):
                                 # point extraction does not allow for additional aggregations
                                 if region.type == 'point':
                                     extraction = Extraction(dataset, period, region, 'value')
-                                    extractions[extraction.abspath] = concat_extraction(
-                                        extractions.get(extraction.abspath), ds_region
+                                    extractions[extraction.path] = concat_extraction(
+                                        extractions.get(extraction.path), ds_region
                                     )
                                     continue
 
@@ -69,13 +69,13 @@ def create_extractions(periods, regions, aggregations):
                                         # concat extraction only if ds_aggregation is not empty
                                         if ds_aggregation:
                                             extraction = Extraction(dataset, period, region, aggregation)
-                                            extractions[extraction.abspath] = concat_extraction(
-                                                extractions.get(extraction.abspath), ds_aggregation
+                                            extractions[extraction.path] = concat_extraction(
+                                                extractions.get(extraction.path), ds_aggregation
                                             )
 
         # write extractions
-        for extraction_abspath, extraction_ds in extractions.items():
-            write_dataset(extraction_ds, extraction_abspath)
+        for extraction_path, extraction_ds in extractions.items():
+            write_dataset(extraction_ds, settings.EXTRACTIONS_PATH / extraction_path)
 
 
 def extract_period(ds, period):

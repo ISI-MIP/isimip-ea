@@ -29,16 +29,16 @@ class Dataset:
         return str(self.path)
 
     @cached_property
-    def abspath(self):
+    def full_path(self):
         return settings.DATASETS_PATH / self.path
 
     @cached_property
     def files(self):
-        glob = sorted(self.abspath.parent.glob(f'{self.abspath.stem}*'))
+        glob = sorted(self.full_path.parent.glob(f'{self.full_path.stem}*'))
 
         return [
             File(file_path, start_year, end_year)
-            for file_path, start_year, end_year in find_files(self.path, glob)
+            for file_path, start_year, end_year in find_files(glob)
         ]
 
     @cached_property
@@ -98,30 +98,54 @@ class Extraction:
 
     @cached_property
     def path(self):
-        path = update_path(
+        path_prefix = update_path(
             self.dataset.path, self.period, self.region, self.aggregation,
             start_year=self.dataset.start_year, end_year=self.dataset.end_year
         )
-        return path.with_suffix('.nc')
+
+        if self.dataset.exists():
+            # if the dataset exists locally, the prefix was constructed from the actual files, with the correct years
+            return path_prefix.with_suffix('.nc')
+        else:
+            # construct a base path for the extraction from the dataset and try to find extraction locally
+            full_path_prefix = settings.EXTRACTIONS_PATH / path_prefix
+            glob = sorted(full_path_prefix.parent.glob(f'{full_path_prefix.stem}*'))
+            for file_path, _, _ in find_files(glob):
+                return file_path.relative_to(settings.EXTRACTIONS_PATH)
+
+            # try to find the extraction online
+            if settings.EXTRACTIONS_LOCATIONS:
+                for location in settings.EXTRACTIONS_LOCATIONS:
+                    if isinstance(location, Path):
+                        pass
+                    else:
+                        pattern = path_prefix.stem + r'_(?P<start_year>\d{4})_(?P<end_year>\d{4})?\.nc\d*'
+                        index = fetch_file(f'{location}/{path_prefix.parent}')
+                        match = re.search(pattern, index)
+                        if match:
+                            return path_prefix.parent / match.group()
 
     @cached_property
-    def abspath(self):
-        return settings.EXTRACTIONS_PATH / self.path
+    def full_path(self):
+        if self.path:
+            return settings.EXTRACTIONS_PATH / self.path
 
     def exists(self):
-        return self.abspath.exists()
+        if self.path:
+            return self.full_path.exists()
 
     def fetch(self):
-        if settings.EXTRACTIONS_LOCATIONS:
-            for location in settings.EXTRACTIONS_LOCATIONS:
-                if isinstance(location, Path):
-                    result = load_file(location / self.path, self.abspath)
-                else:
-                    result = fetch_file(f'{location}/{self.path}', self.abspath)
+        if self.path:
+            if settings.EXTRACTIONS_LOCATIONS:
+                for location in settings.EXTRACTIONS_LOCATIONS:
+                    if isinstance(location, Path):
+                        result = load_file(location / self.path, self.full_path)
+                    else:
+                        result = fetch_file(f'{location}/{self.path}', self.full_path)
 
-                if result:
-                    logger.info(f'Extraction "{self.path}" downloaded')
-                    return
+                    if result:
+                        logger.info(f'Extraction "{self.path}" downloaded')
+                        return
 
     @classmethod
     def gather(cls, dataset, periods, regions, aggregations):
@@ -156,7 +180,7 @@ class Figure:
         return path.with_suffix(f'.{settings.PLOTS_FORMAT}')
 
     @cached_property
-    def abspath(self):
+    def full_path(self):
         return settings.PLOTS_PATH / self.path
 
     @cached_property
@@ -179,7 +203,7 @@ class Figure:
         return get_max_value([dataset.end_year for dataset in self.datasets])
 
     def exists(self):
-        return self.abspath.exists()
+        return self.full_path.exists()
 
 
 class Period:
