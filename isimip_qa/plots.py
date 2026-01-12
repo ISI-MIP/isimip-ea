@@ -53,7 +53,7 @@ def create_plots(periods, regions, aggregations, plots):
                                                     charts[grid_permutation + plot_permutation] = chart
 
                                 if charts:
-                                    empty_chart = get_chart(df, plot, grid_permutation, empty=True)
+                                    empty_chart = get_chart(df, plot, None, empty=True)
 
                                     chart = plot_grid(
                                         settings.GRID_PERMUTATIONS, settings.PLOT_PERMUTATIONS,
@@ -124,12 +124,9 @@ def get_dataframe(ds, plot, labels):
         logger.error(f'unknown type "{plot.type}" for plot "{plot.specifier}"')
 
 
-def get_chart(df, plot, labels, empty=False, legend=True):
-    kwargs = {
-        'empty': empty,
-        'legend': bool(labels),
-        'color_scheme': settings.COLOR_SCHEME
-    }
+def get_chart(df, plot, labels=None, **kwargs):
+    kwargs = dict(legend=bool(labels), color_scheme=settings.COLOR_SCHEME, **kwargs)
+
     if settings.PRIMARY and settings.PRIMARY not in labels:
         kwargs.update(strokeWidth=1)
 
