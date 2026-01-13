@@ -11,6 +11,11 @@ from .plots import create_plots
 def main():
     parser = ArgumentParser(prog='isimip-qa')
 
+    parser.add_argument('-c', '--config', dest='config_path', type=parse_path,
+                        help='Path to an additional config file, updating default and CLI arguments and options.')
+
+    config_args, remaining_args = parser.parse_known_args()
+
     parser.add_argument('paths', nargs='*', action=ArgumentAction,
                         help='Paths of the datasets to process, can contain placeholders, e.g. {model}')
     parser.add_argument('parameters', nargs='*', action=ArgumentAction,
@@ -79,20 +84,17 @@ def main():
                         default='https://files.isimip.org/qa/extractions/',
                         help='URL or file path to the locations of extractions to fetch')
 
-    parser.add_argument('-c', '--config', dest='config', type=parse_path,
-                        help='Path to an additional config file, updating default and CLI arguments and options.')
     parser.add_argument('--log-level', dest='log_level', default='WARN',
                         help='Log level (ERROR, WARN, INFO, or DEBUG)')
     parser.add_argument('--log-file', dest='log_file',
                         help='Path to the log file')
     parser.add_argument('-V', '--version', action='version', version=VERSION)
 
-    args = parser.parse_args()
+    args = parser.parse_args(remaining_args, config_path=config_args.config_path)
 
     setup_logs(log_level=args.log_level, log_file=args.log_file)
 
     settings.from_dict(vars(args))
-    settings.update_from_toml(args.config)
 
     if not settings.PATHS:
         parser.error('You need to provide at least one path.')
