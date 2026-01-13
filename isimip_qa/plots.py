@@ -30,7 +30,6 @@ def create_plots(periods, regions, aggregations, plots):
                                 join_parameters(settings.PLOT_PARAMETERS)
                             )
 
-                            figure_title = format_title(figs_permutation)
                             figure = Figure(path, figure_placeholders, period, region, aggregation, plot)
 
                             if settings.FORCE or not figure.exists():
@@ -58,7 +57,7 @@ def create_plots(periods, regions, aggregations, plots):
                                     chart = plot_grid(
                                         settings.GRID_PERMUTATIONS, settings.PLOT_PERMUTATIONS,
                                         charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
-                                    ).properties(title=figure_title)
+                                    ).properties(title=get_title(figs_permutation, period, region, aggregation, plot))
 
                                     save_plot(chart, figure.full_path)
 
@@ -80,7 +79,6 @@ def get_dataframe(ds, plot, labels):
 
     if plot.type == 'value':
         if columns.intersection(plot.columns):
-            df.attrs['coords']['time']['long_name'] = 'Time'
             df = df.replace(0, np.nan)
             df = create_label(df, labels)
             return df
@@ -144,3 +142,21 @@ def get_chart(df, plot, labels=None, **kwargs):
 
     elif plot.type == 'map':
         return plot_map(df, color_format='.1e', **kwargs)
+
+
+def get_title(permutation, period, region, aggregation, plot):
+    args = list(permutation)
+
+    if period.type != 'auto':
+        args.append(period.specifier)
+
+    if region.type != 'global':
+        args.append(region.specifier)
+
+    if aggregation.type != 'value':
+        args.append(aggregation.specifier)
+
+    if plot.type != 'value':
+        args.append(plot.specifier)
+
+    return format_title(args)
