@@ -105,7 +105,7 @@ def main():
     plots = [Plot(value) for value in settings.PLOTS]
 
     # fetch extractions
-    if not settings.EXTRACTIONS_ONLY and not settings.PLOTS_ONLY:
+    if not settings.EXTRACTIONS_ONLY and not settings.PLOTS_ONLY and settings.EXTRACTIONS_LOCATIONS:
         fetch_extractions(periods, regions, aggregations)
 
     # create the extractions
