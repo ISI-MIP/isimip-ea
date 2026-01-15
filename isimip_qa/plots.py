@@ -125,8 +125,11 @@ def get_dataframe(ds, plot, labels):
 def get_chart(df, plot, labels=None, **kwargs):
     kwargs = dict(legend=bool(labels), color_scheme=settings.COLOR_SCHEME, **kwargs)
 
-    if settings.PRIMARY and settings.PRIMARY not in labels:
-        kwargs.update(strokeWidth=1)
+    if settings.PRIMARY and labels:
+        if set(settings.PRIMARY).intersection(set(labels)):
+            kwargs.update(strokeWidth=3)
+        else:
+            kwargs.update(strokeWidth=0.5)
 
     if plot.type == 'value':
         return plot_line(df, y_format='.1e', **kwargs)
