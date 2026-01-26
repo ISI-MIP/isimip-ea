@@ -78,7 +78,7 @@ ignore = [
     "RUF012", # mutable-class-default
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = [
     "isimip_qa"
 ]

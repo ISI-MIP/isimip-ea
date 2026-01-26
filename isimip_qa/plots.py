@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-
 from isimip_utils.pandas import compute_average, create_label, group_by_day, group_by_month, normalize
 from isimip_utils.parameters import copy_placeholders, get_placeholders, join_parameters
 from isimip_utils.plot import format_title, plot_grid, plot_line, plot_map, save_index, save_plot

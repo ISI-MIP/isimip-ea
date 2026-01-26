@@ -1,7 +1,10 @@
 import logging
 
 from isimip_utils.extractions import (
+    compute_max,
+    compute_min,
     compute_spatial_average,
+    compute_sum,
     compute_temporal_average,
     concat_extraction,
     count_values,
@@ -11,7 +14,7 @@ from isimip_utils.extractions import (
     select_point,
     select_time,
 )
-from isimip_utils.xarray import create_mask, get_attrs, open_dataset, set_attrs, set_fill_value_to_nan, write_dataset
+from isimip_utils.xarray import create_mask, open_dataset, write_dataset
 
 from .config import settings
 from .models import Dataset, Extraction
@@ -118,32 +121,25 @@ def extract_aggregation(ds, aggregation):
         return ds
 
     elif aggregation.type == 'mean':
-        attrs = get_attrs(ds)
-        ds = set_fill_value_to_nan(ds)
-        ds = compute_spatial_average(ds, weights=settings.WEIGHTS)
-        ds = set_attrs(ds, attrs)
-        return ds
+        return compute_spatial_average(ds, weights=settings.WEIGHTS)
+
+    elif aggregation.type == 'min':
+        return compute_min(ds)
+
+    elif aggregation.type == 'max':
+        return compute_max(ds)
+
+    elif aggregation.type == 'sum':
+        return compute_sum(ds)
 
     elif aggregation.type == 'count':
-        attrs = get_attrs(ds)
-        ds = set_fill_value_to_nan(ds)
-        ds = count_values(ds)
-        ds = set_attrs(ds, attrs)
-        return ds
+        return count_values(ds)
 
     elif aggregation.type == 'meanmap':
-        attrs = get_attrs(ds)
-        ds = set_fill_value_to_nan(ds)
-        ds = compute_temporal_average(ds)
-        ds = set_attrs(ds, attrs)
-        return ds
+        return compute_temporal_average(ds)
 
     elif aggregation.type == 'countmap':
-        attrs = get_attrs(ds)
-        ds = set_fill_value_to_nan(ds)
-        ds = count_values(ds, dim=('time', ))
-        ds = set_attrs(ds, attrs)
-        return ds
+        return count_values(ds, dim=('time', ))
 
     else:
         logger.error(f'unknown type "{aggregation.type}" for aggregation "{aggregation.specifier}"')
