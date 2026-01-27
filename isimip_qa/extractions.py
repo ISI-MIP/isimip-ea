@@ -1,11 +1,7 @@
 import logging
 
 from isimip_utils.extractions import (
-    compute_max,
-    compute_min,
-    compute_spatial_average,
-    compute_sum,
-    compute_temporal_average,
+    compute_aggregation,
     concat_extraction,
     count_values,
     mask_bbox,
@@ -120,23 +116,14 @@ def extract_aggregation(ds, aggregation):
     if aggregation.type == 'value':
         return ds
 
-    elif aggregation.type == 'mean':
-        return compute_spatial_average(ds, weights=settings.WEIGHTS)
-
-    elif aggregation.type == 'min':
-        return compute_min(ds)
-
-    elif aggregation.type == 'max':
-        return compute_max(ds)
-
-    elif aggregation.type == 'sum':
-        return compute_sum(ds)
+    elif aggregation.type in ('mean', 'std', 'sum', 'min', 'max'):
+        return compute_aggregation(ds, aggregation.type, weights=settings.WEIGHTS)
 
     elif aggregation.type == 'count':
         return count_values(ds)
 
     elif aggregation.type == 'meanmap':
-        return compute_temporal_average(ds)
+        return compute_aggregation(ds, 'mean', dim=('time', ))
 
     elif aggregation.type == 'countmap':
         return count_values(ds, dim=('time', ))

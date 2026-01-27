@@ -35,7 +35,7 @@ def main():
                         help='Extract only specific regions (comma separated, automatically selected '
                              'from --regions-locations)')
     parser.add_argument('-a', '--aggregations', dest='aggregations', type=parse_list, default='mean',
-                        help='Perform aggregations when extracting (comma separated: value, mean, min, max, sum, '
+                        help='Perform aggregations when extracting (comma separated: value, mean, std, sum, min, max, '
                              'count, meanmap, countmap)')
     parser.add_argument('-p', '--plots', dest='plots', type=parse_list, default='annual',
                         help='Select specific plots (comma separated: value, annual, dayofyear, monthofyear, map)')
