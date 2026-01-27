@@ -47,11 +47,11 @@ def create_plots(periods, regions, aggregations, plots):
                                             with open_dataset(extraction.full_path) as ds:
                                                 df = get_dataframe(ds, plot, plot_permutation)
                                                 if df is not None:
-                                                    chart = get_chart(df, plot, plot_permutation)
+                                                    chart = get_chart(df, plot, labels=plot_permutation)
                                                     charts[grid_permutation + plot_permutation] = chart
 
                                 if charts:
-                                    empty_chart = get_chart(df, plot, None, empty=True)
+                                    empty_chart = get_chart(df, plot, y_label='', empty=True)
 
                                     chart = plot_grid(
                                         settings.GRID_PERMUTATIONS, settings.PLOT_PERMUTATIONS,
