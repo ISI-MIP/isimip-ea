@@ -30,16 +30,20 @@ class Dataset:
 
     @cached_property
     def full_path(self):
-        return settings.DATASETS_PATH / self.path
+        if settings.DATASETS_PATH:
+            return settings.DATASETS_PATH / self.path
 
     @cached_property
     def files(self):
-        glob = sorted(self.full_path.parent.glob(f'{self.full_path.stem}*'))
+        if self.full_path:
+            glob = sorted(self.full_path.parent.glob(f'{self.full_path.stem}*'))
 
-        return [
-            File(file_path, start_year, end_year)
-            for file_path, start_year, end_year in find_files(glob)
-        ]
+            return [
+                File(file_path, start_year, end_year)
+                for file_path, start_year, end_year in find_files(glob)
+            ]
+        else:
+            return []
 
     @cached_property
     def start_year(self):
@@ -106,7 +110,7 @@ class Extraction:
         if self.dataset.exists():
             # if the dataset exists locally, the prefix was constructed from the actual files, with the correct years
             return path_prefix.with_suffix('.nc')
-        else:
+        elif settings.EXTRACTIONS_PATH:
             # construct a base path for the extraction from the dataset and try to find extraction locally
             full_path_prefix = settings.EXTRACTIONS_PATH / path_prefix
             glob = sorted(full_path_prefix.parent.glob(f'{full_path_prefix.stem}*'))
