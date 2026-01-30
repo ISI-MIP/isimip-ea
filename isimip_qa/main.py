@@ -61,10 +61,12 @@ def main():
                         help='Create an index.html file when creating plots.')
     parser.add_argument('--primary', dest='primary',
                         help='Treat these placeholders as primary and plot them in color [default: all]')
-    parser.add_argument('--grid', dest='grid', type=parse_list, default="",
+    parser.add_argument('--grid-placeholders', dest='grid_placeholders', type=parse_list, default="",
                         help='Parameters which are used as dimensions of the plot grid.')
-    parser.add_argument('--figs', dest='figs', type=parse_list, default="",
+    parser.add_argument('--figure-placeholders', dest='figure_placeholders', type=parse_list, default="",
                         help='Parameters for which separate figures are created')
+    parser.add_argument('--figure-path', dest='figure_path', type=parse_path, default=None,
+                        help='Custom paths for the created figures, can contain placeholders')
     parser.add_argument('--color-scheme', dest='color_scheme', default='category20',
                         help='Color scheme to use for plots [default: category20].')
 

@@ -176,16 +176,19 @@ class Figure:
 
     @cached_property
     def path(self):
-        # find the first placeholder which is not in FIGS or GRID
-        figure_path_template = self.path_template
-        parts = Path(self.path_template).parts
-        name = Path(self.path_template).name
-        for i, part in enumerate(parts):
-            match = re.match(r"^\{([^}]+)\}$", part)
-            if match:
-                if match.group(1) not in settings.FIGS + settings.GRID:
-                    figure_path_template = Path(*parts[:i]) / name
-                    break
+        if settings.FIGURE_PATH:
+            figure_path_template = settings.FIGURE_PATH / Path(self.path_template).name
+        else:
+            # find the  placeholder which is not in FIGS_PLACEHOLDERS or GRID_PLACEHOLDERS
+            figure_path_template = self.path_template
+            parts = Path(self.path_template).parts
+            name = Path(self.path_template).name
+            for i, part in enumerate(parts):
+                match = re.match(r"^\{([^}]+)\}$", part)
+                if match:
+                    if match.group(1) not in settings.FIGURE_PLACEHOLDERS + settings.GRID_PLACEHOLDERS:
+                        figure_path_template = Path(*parts[:i]) / name
+                        break
 
         path = update_path(
             apply_placeholders(figure_path_template, self.placeholders),

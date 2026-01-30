@@ -15,16 +15,17 @@ class Settings(BaseSettings):
 
     @cached_property
     def FIGS_PARAMETERS(self):
-        return {key: self.PARAMETERS[key] for key in self.FIGS} if self.PARAMETERS else {}
+        return {key: self.PARAMETERS[key] for key in self.FIGURE_PLACEHOLDERS} if self.PARAMETERS else {}
 
     @cached_property
     def GRID_PARAMETERS(self):
-        return {key: self.PARAMETERS[key] for key in self.GRID} if self.PARAMETERS else {}
+        return {key: self.PARAMETERS[key] for key in self.GRID_PLACEHOLDERS} if self.PARAMETERS else {}
 
     @cached_property
     def PLOT_PARAMETERS(self):
         return {
-            key: values for key, values in self.PARAMETERS.items() if key not in self.FIGS + self.GRID
+            key: values for key, values in self.PARAMETERS.items()
+            if key not in self.FIGURE_PLACEHOLDERS + self.GRID_PLACEHOLDERS
         } if self.PARAMETERS else {}
 
     @cached_property
