@@ -90,11 +90,16 @@ def main():
                         help='Log level (ERROR, WARN, INFO, or DEBUG)')
     parser.add_argument('--log-file', dest='log_file',
                         help='Path to the log file')
+    parser.add_argument('--show-time', dest='show_time', action='store_true', default=False,
+                        help='show time in console logs')
+    parser.add_argument('--show-path', dest='show_path', action='store_true', default=False,
+                        help='show path in console logs')
+
     parser.add_argument('-V', '--version', action='version', version=VERSION)
 
     args = parser.parse_args(remaining_args, config_path=config_args.config_path)
 
-    setup_logs(log_level=args.log_level, log_file=args.log_file)
+    setup_logs(log_level=args.log_level, log_file=args.log_file, show_time=args.show_time, show_path=args.show_path)
 
     settings.from_dict(vars(args))
 
