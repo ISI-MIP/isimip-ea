@@ -51,7 +51,7 @@ def create_plots(periods, regions, aggregations, plots):
                                                     charts[grid_permutation + plot_permutation] = chart
 
                                 if charts:
-                                    empty_chart = get_chart(df, plot, y_label='', empty=True)
+                                    empty_chart = get_chart(df, plot, empty=True)
 
                                     chart = plot_grid(
                                         settings.GRID_PERMUTATIONS, settings.PLOT_PERMUTATIONS,
