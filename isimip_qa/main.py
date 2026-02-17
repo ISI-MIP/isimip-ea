@@ -9,12 +9,14 @@ from .plots import create_plots
 
 
 def main():
-    parser = ArgumentParser(prog='isimip-qa')
+    config_parser = ArgumentParser(add_help=False)
 
-    parser.add_argument('-c', '--config', dest='config_path', type=parse_path,
+    config_parser.add_argument('-c', '--config', dest='config_path', type=parse_path,
                         help='Path to an additional config file, updating default and CLI arguments and options.')
 
-    config_args, remaining_args = parser.parse_known_args()
+    config_args, remaining_args = config_parser.parse_known_args()
+
+    parser = ArgumentParser(prog='isimip-qa', parents=[config_parser])
 
     parser.add_argument('paths', nargs='*', action=ArgumentAction,
                         help='Paths of the datasets to process, can contain placeholders, e.g. {model}')
