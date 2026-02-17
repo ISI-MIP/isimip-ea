@@ -25,8 +25,8 @@ def create_plots(periods, regions, aggregations, plots):
                         for figs_permutation in settings.FIGS_PERMUTATIONS:
                             figure_placeholders = copy_placeholders(
                                 get_placeholders(settings.FIGS_PARAMETERS, figs_permutation),
-                                join_parameters(settings.GRID_PARAMETERS),
-                                join_parameters(settings.PLOT_PARAMETERS)
+                                join_parameters(settings.GRID_PARAMETERS, max_count=4),
+                                join_parameters(settings.PLOT_PARAMETERS, max_count=4)
                             )
 
                             figure = Figure(path, figure_placeholders, period, region, aggregation, plot)
