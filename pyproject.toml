@@ -3,14 +3,14 @@ requires = ["setuptools", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "isimip-qa"
+name = "isimip-ea"
 authors = [
     { name = "Jochen Klar", email = "jochen.klar@pik-potsdam.de" },
 ]
 maintainers = [
     { name = "Jochen Klar", email = "jochen.klar@pik-potsdam.de" },
 ]
-description = "A command line tool to for quality assessment whithin the ISIMIP project."
+description = "A command line tool for extraction and analysis of datasets within the ISIMIP project."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
@@ -23,12 +23,12 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "isimip-utils[xarray,netcdf,altair]~=1.4.0",
+    # "isimip-utils[xarray,netcdf,altair]~=1.4.0",
 ]
 dynamic = ["version"]
 
 [project.urls]
-Repository = "https://github.com/ISI-MIP/isimip-qa"
+Repository = "https://github.com/ISI-MIP/isimip-ea"
 
 [project.optional-dependencies]
 dev = [
@@ -45,10 +45,10 @@ pytest = [
 ]
 
 [project.scripts]
-isimip-qa = "isimip_qa.main:main"
+isimip-ea = "isimip_ea.main:main"
 
 [tool.setuptools]
-packages = ["isimip_qa"]
+packages = ["isimip_ea"]
 
 [tool.setuptools_scm]
 version_scheme = "release-branch-semver"
@@ -79,7 +79,7 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = [
-    "isimip_qa"
+    "isimip_ea"
 ]
 section-order = [
     "future",

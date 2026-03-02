@@ -16,7 +16,7 @@ def main():
 
     config_args, remaining_args = config_parser.parse_known_args()
 
-    parser = ArgumentParser(prog='isimip-qa', parents=[config_parser])
+    parser = ArgumentParser(prog='isimip-ea', parents=[config_parser])
 
     parser.add_argument('paths', nargs='*', action=ArgumentAction,
                         help='Paths of the datasets to process, can contain placeholders, e.g. {model}')
@@ -85,7 +85,7 @@ def main():
     parser.add_argument('--regions-location', dest='regions_locations', type=parse_locations,
                         help='Use the provided files to create the regions.')
     parser.add_argument('--extractions-locations', dest='extractions_locations', type=parse_locations,
-                        default='https://files.isimip.org/qa/extractions/',
+                        default='https://files.isimip.org/extractions/',
                         help='URL or file path to the locations of extractions to fetch')
 
     parser.add_argument('--log-level', dest='log_level', default='WARN',
