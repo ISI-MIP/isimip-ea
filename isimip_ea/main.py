@@ -23,11 +23,11 @@ def main():
     parser.add_argument('parameters', nargs='*', action=ArgumentAction,
                         help='Values for the placeholders in the from key=value1,value2,...')
 
-    parser.add_argument('--datasets-path', dest='datasets_path', type=parse_path,
+    parser.add_argument('--datasets-path', dest='datasets_path', type=parse_path, default='.',
                         help='Base path for the input datasets')
-    parser.add_argument('--extractions-path', dest='extractions_path', type=parse_path,
+    parser.add_argument('--extractions-path', dest='extractions_path', type=parse_path, default='.',
                         help='Base path for the created extractions')
-    parser.add_argument('--plots-path', dest='plots_path', type=parse_path,
+    parser.add_argument('--plots-path', dest='plots_path', type=parse_path, default='.',
                         help='Base path for the created plots')
 
     parser.add_argument('-d', '--dates', dest='dates', type=parse_list, default='auto',
@@ -39,7 +39,7 @@ def main():
     parser.add_argument('-a', '--aggregations', dest='aggregations', type=parse_list, default='mean',
                         help='Perform aggregations when extracting (comma separated: value, mean, std, sum, min, max, '
                              'count, meanmap, countmap)')
-    parser.add_argument('-p', '--plots', dest='plots', type=parse_list, default='annual',
+    parser.add_argument('-p', '--plots', dest='plots', type=parse_list, default='value',
                         help='Select specific plots (comma separated: value, annual, dayofyear, monthofyear, map)')
 
     parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
