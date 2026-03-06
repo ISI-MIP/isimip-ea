@@ -9,7 +9,6 @@ A command line tool for extraction and analysis of datasets within the ISIMIP pr
 Using ISIMIP datasets in NetCDF format as input, the tool creates (a) extractions of the data as CSV
 files using predefined regions or points, and (b) creates plots to analyze the data from these regions.
 
-
 Setup
 -----
 
