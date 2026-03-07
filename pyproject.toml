@@ -1,6 +1,6 @@
 [build-system]
-build-backend = "setuptools.build_meta"
-requires = ["setuptools", "setuptools_scm"]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name = "isimip-ea"
@@ -30,31 +30,14 @@ dynamic = ["version"]
 [project.urls]
 Repository = "https://github.com/ISI-MIP/isimip-ea"
 
-[project.optional-dependencies]
-dev = [
-    "build",
-    "pre-commit",
-    "ruff",
-    "twine",
-]
-pytest = [
-    "pytest~=7.4.0",
-    "pytest-console-scripts~=1.4.1",
-    "pytest-cov~=4.1.0",
-    "pytest-mock~=3.12.0"
-]
-
 [project.scripts]
 isimip-ea = "isimip_ea.main:main"
 
-[tool.setuptools]
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
 packages = ["isimip_ea"]
-
-[tool.setuptools_scm]
-version_scheme = "release-branch-semver"
-
-[tool.pytest.ini_options]
-python_files = "test_*.py"
 
 [tool.ruff]
 target-version = "py312"
