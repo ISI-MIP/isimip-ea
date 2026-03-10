@@ -2,7 +2,7 @@ ISIMIP extraction and analysis
 ==============================
 
 [![Python Version](https://img.shields.io/badge/python->=3.11-blue)](https://www.python.org/)
-[![License](https://img.shields.io/github/license/ISI-MIP/isimip-ea?style=flat)](https://github.com/rdmorganiser/isimip-ea/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/ISI-MIP/isimip-ea?style=flat)](https://github.com/ISI-MIP/isimip-ea/blob/main/LICENSE)
 [![Latest release](https://img.shields.io/pypi/v/isimip-ea.svg?style=flat)](https://pypi.python.org/pypi/isimip-ea/)
 
 A command line tool for extraction and analysis of datasets within the ISIMIP project.
