@@ -1,8 +1,9 @@
 ISIMIP extraction and analysis
 ==============================
 
-[![Python Version](https://img.shields.io/badge/python->=3.8-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/ISI-MIP/isimip-qc/blob/master/LICENSE)
+[![Python Version](https://img.shields.io/badge/python->=3.11-blue)](https://www.python.org/)
+[![License](https://img.shields.io/github/license/ISI-MIP/isimip-ea?style=flat)](https://github.com/rdmorganiser/isimip-ea/blob/main/LICENSE)
+[![Latest release](https://img.shields.io/pypi/v/isimip-ea.svg?style=flat)](https://pypi.python.org/pypi/isimip-ea/)
 
 A command line tool for extraction and analysis of datasets within the ISIMIP project.
 
@@ -12,11 +13,11 @@ files using predefined regions or points, and (b) creates plots to analyze the d
 Setup
 -----
 
-The application is written in Python (>= 3.10) uses only dependencies, which can be installed
+The application is written in Python (>= 3.11) uses only dependencies, which can be installed
 without administrator privileges. The installation of Python (and its developing packages), however
 differs from operating system to operating system. Optional Git is needed if the application is installed
 directly from GitHub. The installation of Python 3 and Git for different platforms is documented
-[here](https://github.com/ISI-MIP/isimip-utils/blob/master/docs/prerequisites.md).
+[here](https://utils.isimip.org/prerequisites).
 
 The tool itself can be installed via pip. Usually you want to create a
 [virtual environment](https://docs.python.org/3/library/venv.html) first, but this is optional.
@@ -43,20 +44,6 @@ Usage
 The tool has several options which can be inspected using the help option `-h, --help`:
 
 ```plain
-usage: isimip-ea [-h] [-c CONFIG_PATH] [--datasets-path DATASETS_PATH]
-                 [--extractions-path EXTRACTIONS_PATH] [--plots-path PLOTS_PATH] [-d DATES]
-                 [-r REGIONS] [-a AGGREGATIONS] [-p PLOTS] [-f] [-l] [--fetch-only]
-                 [--extractions-only] [--plots-only] [--gridarea GRIDAREA]
-                 [--plot-format PLOT_FORMAT] [--plot-index PLOT_INDEX] [--primary PRIMARY]
-                 [--grid-placeholders GRID_PLACEHOLDERS]
-                 [--figure-placeholders FIGURE_PLACEHOLDERS] [--figure-path FIGURE_PATH]
-                 [--color-scheme COLOR_SCHEME] [--independent-x] [--independent-y] [--shared-color]
-                 [--protocol-location PROTOCOL_LOCATIONS] [--regions-location REGIONS_LOCATIONS]
-                 [--extractions-locations EXTRACTIONS_LOCATIONS] [--log-level LOG_LEVEL]
-                 [--log-file LOG_FILE] [--show-time] [--show-path] [-V]
-                 [paths ...] [parameters ...]
-isimip-ea: error: You need to provide at least one path.
-(env) klarmac:~/data/isimip/ea$ isimip-ea --help
 usage: isimip-ea [-h] [-c CONFIG_PATH] [--datasets-path DATASETS_PATH]
                  [--extractions-path EXTRACTIONS_PATH] [--plots-path PLOTS_PATH] [-d DATES]
                  [-r REGIONS] [-a AGGREGATIONS] [-p PLOTS] [-f] [-l] [--fetch-only]
@@ -148,15 +135,15 @@ plots_path = "~/data/isimip/ea/plots"
 
 log_level = "INFO"
 
-protocol_locations = "~/code/isimip/isimip-protocol-3 ~/code/isimip/isimip-protocol-2"
+protocol_locations = ["~/code/isimip/isimip-protocol-3", "~/code/isimip/isimip-protocol-2"]
 
 # files with regions: points or bbox in json or csv, masks in NetCDF or shapefiles
-regions_locations = """
-    ~/data/isimip/ea/share/points.json
-    ~/data/isimip/ea/share/bbox.csv
-    ~/data/isimip/ea/share/mask.nc
-    ~/data/isimip/ea/share/shape.shp
-"""
+regions_locations = [
+    "~/data/isimip/ea/share/points.json",
+    "~/data/isimip/ea/share/bbox.csv",
+    "~/data/isimip/ea/share/mask.nc",
+    "~/data/isimip/ea/share/shape.shp",
+]
 
 # gridarea file created with `cdo gridarea`
 gridarea = "~/data/isimip/ea/share/gridarea.nc"
