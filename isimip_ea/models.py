@@ -1,5 +1,6 @@
 import logging
 import re
+from functools import cached_property
 from pathlib import Path
 
 from isimip_utils.fetch import fetch_file, load_file
@@ -10,7 +11,7 @@ from isimip_utils.parameters import (
     get_permutations,
     get_placeholders,
 )
-from isimip_utils.utils import cached_property, get_max_value, get_min_value
+from isimip_utils.utils import get_max_value, get_min_value
 
 from .config import settings
 from .utils import init_period, init_region, update_path

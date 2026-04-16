@@ -1,6 +1,7 @@
+from functools import cached_property
+
 from isimip_utils.config import Settings as BaseSettings
 from isimip_utils.parameters import get_permutations
-from isimip_utils.utils import cached_property
 from isimip_utils.xarray import open_dataset
 
 
