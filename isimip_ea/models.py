@@ -20,13 +20,12 @@ logger = logging.getLogger(__name__)
 
 
 class Dataset:
-
     def __init__(self, path_template, placeholders):
         self.path = apply_placeholders(path_template, placeholders)
         self.path_template = path_template
         self.placeholders = placeholders
 
-    def  __repr__(self):
+    def __repr__(self):
         return str(self.path)
 
     @cached_property
@@ -38,11 +37,7 @@ class Dataset:
     def files(self):
         if self.full_path:
             glob = sorted(self.full_path.parent.glob(f'{self.full_path.stem}*'))
-
-            return [
-                File(file_path, start_year, end_year)
-                for file_path, start_year, end_year in find_files(glob)
-            ]
+            return [File(file_path, start_year, end_year) for file_path, start_year, end_year in find_files(glob)]
         else:
             return []
 
@@ -80,32 +75,34 @@ class Dataset:
 
 
 class File:
-
     def __init__(self, path, start_year, end_year):
         self.path = path
         self.start_year = start_year
         self.end_year = end_year
 
-    def  __repr__(self):
+    def __repr__(self):
         return str(self.path)
 
 
 class Extraction:
-
     def __init__(self, dataset, period, region, aggregation):
         self.dataset = dataset
         self.period = period
         self.region = region
         self.aggregation = aggregation
 
-    def  __repr__(self):
+    def __repr__(self):
         return str(self.path)
 
     @cached_property
     def path(self):
         path_prefix = update_path(
-            self.dataset.path, self.period, self.region, self.aggregation,
-            start_year=self.dataset.start_year, end_year=self.dataset.end_year
+            self.dataset.path,
+            self.period,
+            self.region,
+            self.aggregation,
+            start_year=self.dataset.start_year,
+            end_year=self.dataset.end_year,
         )
 
         if self.dataset.exists():
@@ -119,7 +116,7 @@ class Extraction:
                 return file_path.relative_to(settings.EXTRACTIONS_PATH)
 
             # try to find the extraction online
-            if settings.EXTRACTIONS_LOCATIONS:
+            if settings.FETCH_EXTRACTIONS:
                 for location in settings.EXTRACTIONS_LOCATIONS:
                     if isinstance(location, Path):
                         pass
@@ -163,7 +160,6 @@ class Extraction:
 
 
 class Figure:
-
     def __init__(self, path_template, placeholders, period, region, aggregation, plot):
         self.path_template = path_template
         self.placeholders = placeholders
@@ -172,29 +168,46 @@ class Figure:
         self.aggregation = aggregation
         self.plot = plot
 
-    def  __repr__(self):
+    def __repr__(self):
         return str(self.path)
 
     @cached_property
     def path(self):
         if settings.FIGURE_PATH:
-            figure_path_template = settings.FIGURE_PATH / Path(self.path_template).name
+            figure_path = apply_placeholders(
+                settings.FIGURE_PATH,
+                {
+                    'period': self.period.specifier,
+                    'region': self.region.specifier,
+                    'aggregation': self.aggregation.specifier,
+                    'plot': self.plot.specifier,
+                    **self.placeholders,
+                },
+            )
+
+            figure_path_template = Path(figure_path) / Path(self.path_template).name
         else:
             # find the  placeholder which is not in FIGS_PLACEHOLDERS or GRID_PLACEHOLDERS
             figure_path_template = self.path_template
             parts = Path(self.path_template).parts
             name = Path(self.path_template).name
             for i, part in enumerate(parts):
-                match = re.match(r"^\{([^}]+)\}$", part)
+                match = re.match(r'^\{([^}]+)\}$', part)
                 if match:
                     if match.group(1) not in settings.FIGURE_PLACEHOLDERS + settings.GRID_PLACEHOLDERS:
                         figure_path_template = Path(*parts[:i]) / name
                         break
 
+        placeholders = {**self.placeholders, 'region': self.region}
+
         path = update_path(
-            apply_placeholders(figure_path_template, self.placeholders),
-            self.period, self.region, self.aggregation, self.plot,
-            start_year=self.start_year, end_year=self.end_year
+            apply_placeholders(figure_path_template, placeholders),
+            self.period,
+            self.region,
+            self.aggregation,
+            self.plot,
+            start_year=self.start_year,
+            end_year=self.end_year,
         )
 
         return path.with_suffix(f'.{settings.PLOT_FORMAT}')
@@ -209,7 +222,7 @@ class Figure:
         for grid_permutation in settings.GRID_PERMUTATIONS:
             dataset_placeholders = copy_placeholders(
                 self.placeholders,
-                get_placeholders(settings.GRID_PARAMETERS, grid_permutation)
+                get_placeholders(settings.GRID_PARAMETERS, grid_permutation),
             )
             datasets.append(Dataset(self.path_template, dataset_placeholders))
         return datasets
@@ -227,40 +240,36 @@ class Figure:
 
 
 class Period:
-
     def __init__(self, value):
         if value == 'auto':
             self.type = self.specifier = value
         else:
             self.__dict__.update(init_period(value))
 
-    def  __repr__(self):
+    def __repr__(self):
         return self.specifier
 
 
 class Region:
-
     def __init__(self, value):
         if value == 'global':
             self.type = self.specifier = value
         else:
             self.__dict__.update(init_region(value))
 
-    def  __repr__(self):
+    def __repr__(self):
         return self.specifier
 
 
 class Aggregation:
-
     def __init__(self, value):
         self.type = self.specifier = value
 
-    def  __repr__(self):
+    def __repr__(self):
         return self.specifier
 
 
 class Plot:
-
     def __init__(self, value):
         self.type = self.specifier = value
 
@@ -269,5 +278,5 @@ class Plot:
         else:
             self.columns = {'time'}
 
-    def  __repr__(self):
+    def __repr__(self):
         return self.specifier

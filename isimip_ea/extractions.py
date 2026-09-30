@@ -123,10 +123,10 @@ def extract_aggregation(ds, aggregation):
         return count_values(ds)
 
     elif aggregation.type == 'meanmap':
-        return compute_aggregation(ds, 'mean', dim=('time', ))
+        return compute_aggregation(ds, 'mean', dim=('time',))
 
     elif aggregation.type == 'countmap':
-        return count_values(ds, dim=('time', ))
+        return count_values(ds, dim=('time',))
 
     else:
         logger.error(f'unknown type "{aggregation.type}" for aggregation "{aggregation.specifier}"')

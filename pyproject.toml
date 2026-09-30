@@ -43,6 +43,9 @@ packages = ["isimip_ea"]
 target-version = "py312"
 line-length = 120
 
+[tool.ruff.format]
+quote-style = "single"
+
 [tool.ruff.lint]
 select = [
     "B",    # flake8-bugbear
@@ -55,9 +58,6 @@ select = [
     "UP",   # pyupgrade
     "W",    # pycodestyle
     "YTT",  # flake8-2020
-]
-ignore = [
-    "RUF012", # mutable-class-default
 ]
 
 [tool.ruff.lint.isort]

@@ -19,20 +19,20 @@ def init_period(option):
             'type': 'period',
             'specifier': f'{start_time}_{end_time}',
             'start_time': start_time,
-            'end_time': end_time
+            'end_time': end_time,
         }
     elif re.match(r'\d{4}', option):
         return {
             'type': 'date',
             'specifier': option,
-            'time': parse_date(option)
+            'time': parse_date(option),
         }
 
     # if region could not be determined, log error and return
     logger.error(f'could not determine type for period "{option}"')
     return {
         'type': 'unknown',
-        'specifier': option
+        'specifier': option,
     }
 
 
@@ -57,7 +57,7 @@ def init_region(value):
                             'west': float(row['west']),
                             'east': float(row['east']),
                             'south': float(row['south']),
-                            'north': float(row['north'])
+                            'north': float(row['north']),
                         }
 
                     if {'lat', 'lon'}.issubset(df.columns):
@@ -65,7 +65,7 @@ def init_region(value):
                             'type': 'point',
                             'specifier': value,
                             'lat': float(row['lat']),
-                            'lon': float(row['lon'])
+                            'lon': float(row['lon']),
                         }
 
             elif location.suffix == '.nc':
@@ -77,11 +77,12 @@ def init_region(value):
                             'type': 'mask',
                             'specifier': value,
                             'mask_ds': ds,
-                            'mask_var': mask_var
+                            'mask_var': mask_var,
                         }
 
             elif location.suffix == '.zip' or location.suffix == '.shp':
                 import geopandas
+
                 df = geopandas.read_file(location)
                 row = find_row(df, value)
                 if row:
@@ -89,14 +90,14 @@ def init_region(value):
                         'type': 'shape',
                         'specifier': f'layer-{value}' if value.isdigit() else value,
                         'df': df,
-                        'layer': row.name
+                        'layer': row.name,
                     }
 
     # if region could not be determined, log error and return
     logger.warning(f'could not determine type for region "{value}"')
     return {
         'type': 'unknown',
-        'specifier': value
+        'specifier': value,
     }
 
 
@@ -114,12 +115,12 @@ def find_row(df, value):
 
 def parse_date(string, start=True):
     try:
-        return datetime.strptime(string, "%Y")
+        return datetime.strptime(string, '%Y')
     except ValueError:
         try:
-            return datetime.strptime(string, "%Y%m%d")
+            return datetime.strptime(string, '%Y%m%d')
         except ValueError as e:
-            raise RuntimeError(f"Unrecognized date format: {string}") from e
+            raise RuntimeError(f'Unrecognized date format: {string}') from e
 
 
 def update_path(path, period, region, aggregation, plot=None, start_year=None, end_year=None):
@@ -147,4 +148,4 @@ def update_path(path, period, region, aggregation, plot=None, start_year=None, e
     if end_year:
         stem += f'_{end_year}'
 
-    return path.with_stem(stem)
+    return path.with_stem(stem.lower())
